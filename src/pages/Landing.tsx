@@ -1,53 +1,181 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Recycle, Shield, BarChart3, Link2, ArrowRight, Leaf, Truck, Factory, Building2, Search, Phone, Accessibility, Info, AlertCircle, User as UserIcon, Database } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Recycle, Shield, BarChart3, Link2, ArrowRight, Leaf, Truck, Factory, Building2, Search, Phone, Accessibility, Info, AlertCircle, User as UserIcon, Database, LogOut, ChevronDown, Settings, UserCheck, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { useLanguage } from '@/components/LanguageProvider';
-import { useNavigate } from 'react-router-dom';
 import { useAccessibility } from '@/components/AccessibilityProvider';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useState, useEffect } from 'react';
 
-const features = [
+// Types
+interface User {
+  name: string;
+  role: string;
+}
+
+interface Feature {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+}
+
+interface Role {
+  icon: LucideIcon;
+  id: string;
+  color: string;
+}
+
+interface Stat {
+  label: string;
+  value: number;
+  suffix: string;
+}
+
+interface PortalCardProps {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  onClick: () => void;
+  accent: string;
+}
+
+const features: Feature[] = [
   { icon: Recycle, title: 'Track Every Gram', desc: 'Full lifecycle tracking from household to final processing with QR-based verification.' },
   { icon: Shield, title: 'Blockchain Verified', desc: 'Immutable records ensure no waste data can be tampered with or falsified.' },
   { icon: BarChart3, title: 'Smart Analytics', desc: 'AI-powered anomaly detection flags suspicious activities in real-time.' },
   { icon: Link2, title: 'Chain of Custody', desc: 'Every handoff is recorded, creating an unbreakable chain of accountability.' },
 ];
 
-const roles = [
+const roles: Role[] = [
   { icon: Leaf, id: 'citizen', color: 'from-emerald-500 to-emerald-600' },
   { icon: Truck, id: 'collector', color: 'from-blue-500 to-blue-600' },
   { icon: Factory, id: 'facility', color: 'from-purple-500 to-purple-600' },
   { icon: Building2, id: 'authority', color: 'from-orange-500 to-orange-600' },
 ];
 
-const stats = [
+const stats: Stat[] = [
   { label: 'Waste Tracked', value: 24500, suffix: ' kg' },
   { label: 'Recycling Rate', value: 82, suffix: '%' },
   { label: 'Active Citizens', value: 1240, suffix: '+' },
   { label: 'Anomalies Caught', value: 47, suffix: '' },
 ];
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
 export default function Landing() {
   const { t, language, setLanguage } = useLanguage();
   const { textSize, setTextSize } = useAccessibility();
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('tb_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse user data');
+      }
+    }
+  }, []);
 
   const handleLogin = (role: string) => {
-    localStorage.setItem('tb_user', JSON.stringify({
-      name: role === 'citizen' ? 'Krishna S Choudhary' : role === 'authority' ? 'Chief Officer' : 'Demo Facility Manager',
-      role
-    }));
+    // If already logged in, just navigate to dashboard
+    if (user) {
+      navigate(`/${user.role}`);
+      return;
+    }
+    
+    let userName = '';
+    switch (role) {
+      case 'citizen':
+        userName = 'Krishna C';
+        break;
+      case 'collector':
+        userName = 'Rajesh Kumar';
+        break;
+      case 'facility':
+        userName = 'Facility Manager';
+        break;
+      case 'authority':
+        userName = 'Chief Officer';
+        break;
+      default:
+        userName = 'User';
+    }
+    
+    const userData: User = { name: userName, role };
+    localStorage.setItem('tb_user', JSON.stringify(userData));
+    setUser(userData);
     navigate(`/${role}`);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tb_user');
+    setUser(null);
+    navigate('/');
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getRoleIcon = (role: string): React.ReactNode => {
+    switch (role) {
+      case 'citizen':
+        return <Leaf className="w-4 h-4" />;
+      case 'collector':
+        return <Truck className="w-4 h-4" />;
+      case 'facility':
+        return <Factory className="w-4 h-4" />;
+      case 'authority':
+        return <Building2 className="w-4 h-4" />;
+      default:
+        return <UserIcon className="w-4 h-4" />;
+    }
+  };
+
+  const getRoleDisplay = (role: string): string => {
+    switch (role) {
+      case 'citizen':
+        return 'Citizen';
+      case 'collector':
+        return 'Collector';
+      case 'facility':
+        return 'Facility Manager';
+      case 'authority':
+        return 'Authority';
+      default:
+        return role;
+    }
+  };
+
+  const getRoleAccent = (roleId: string): string => {
+    switch (roleId) {
+      case 'citizen':
+        return 'bg-blue-600';
+      case 'collector':
+        return 'bg-green-600';
+      case 'facility':
+        return 'bg-purple-600';
+      case 'authority':
+        return 'bg-red-600';
+      default:
+        return 'bg-gray-600';
+    }
   };
 
   return (
@@ -130,12 +258,64 @@ export default function Landing() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="hidden sm:flex rounded-lg border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444] hover:text-white font-[800] uppercase tracking-wider text-[10px] h-10 px-4 gap-2 border-2">
-                <AlertCircle className="w-4 h-4" /> Report Anomaly
-              </Button>
-              <Button onClick={() => navigate('/login')} className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-lg font-[800] uppercase tracking-wider text-[10px] h-10 px-5 gap-2 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                <UserIcon className="w-4 h-4" /> Citizen Login
-              </Button>
+              {!user ? (
+                <>
+                  <Button variant="outline" className="hidden sm:flex rounded-lg border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444] hover:text-white font-[800] uppercase tracking-wider text-[10px] h-10 px-4 gap-2 border-2">
+                    <AlertCircle className="w-4 h-4" /> Report Anomaly
+                  </Button>
+                  <Button onClick={() => navigate('/login')} className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-lg font-[800] uppercase tracking-wider text-[10px] h-10 px-5 gap-2 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    <UserIcon className="w-4 h-4" /> Citizen Login
+                  </Button>
+                </>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-3 hover:bg-muted/50 rounded-full transition-all px-3 py-1.5">
+                      <Avatar className="h-9 w-9 bg-gradient-to-br from-secondary to-secondary/70">
+                        <AvatarFallback className="bg-secondary text-white font-bold text-sm">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="hidden md:block text-left">
+                        <p className="text-sm font-bold text-[#1a2634] leading-tight">{user.name}</p>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                          {getRoleIcon(user.role)}
+                          <span>{getRoleDisplay(user.role)}</span>
+                        </p>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {getRoleDisplay(user.role)} Portal
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate(`/${user.role}`)} className="cursor-pointer">
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/blockchain')} className="cursor-pointer">
+                      <Database className="mr-2 h-4 w-4" />
+                      <span>Blockchain Explorer</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
@@ -234,7 +414,7 @@ export default function Landing() {
             <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Four core pillars of the TrackBin ecosystem</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map((feature, i) => (
+            {features.map((feature) => (
               <div key={feature.title} className="flex items-start gap-8 p-10 bg-[#f8f9fa] border border-border/50 rounded-[2.5rem] hover:bg-white hover:shadow-2xl transition-all group">
                 <div className="w-16 h-16 rounded-2xl bg-[#1a2634] text-white flex items-center justify-center shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                   <feature.icon className="w-8 h-8" />
@@ -258,10 +438,10 @@ export default function Landing() {
             <PortalCard
               key={role.id}
               icon={role.icon}
-              title={t(role.id + 'Portal' as any)}
-              desc={t(role.id + 'Desc' as any)}
+              title={t(`${role.id}Portal` as keyof typeof t)}
+              desc={t(`${role.id}Desc` as keyof typeof t)}
               onClick={() => handleLogin(role.id)}
-              accent={role.id === 'citizen' ? 'bg-blue-600' : role.id === 'authority' ? 'bg-red-600' : 'bg-green-600'}
+              accent={getRoleAccent(role.id)}
             />
           ))}
           <PortalCard
@@ -340,7 +520,7 @@ export default function Landing() {
   );
 }
 
-function PortalCard({ icon: Icon, title, desc, onClick, accent }: any) {
+function PortalCard({ icon: Icon, title, desc, onClick, accent }: PortalCardProps) {
   return (
     <motion.div
       whileHover={{ y: -5 }}
