@@ -1,20 +1,49 @@
-import { type WasteStatus } from '@/lib/mockData';
+// src/components/StatusBadge.tsx
+import { WasteStatus } from '@/lib/types';
+
+interface StatusBadgeProps {
+  status: WasteStatus;
+  showDot?: boolean;
+}
 
 const statusConfig: Record<WasteStatus, { label: string; className: string }> = {
-  submitted: { label: 'Assigned', className: 'bg-muted text-muted-foreground' },
-  collected: { label: 'Collected', className: 'bg-secondary/10 text-secondary border border-secondary/20' },
-  in_transit: { label: 'In Transit', className: 'bg-primary/10 text-primary border border-primary/20' },
-  delivered: { label: 'Verified', className: 'bg-accent/10 text-accent border border-accent/20' },
-  recycled: { label: 'Processed', className: 'bg-secondary/20 text-secondary border border-secondary/30' },
-  landfill: { label: 'Storage', className: 'bg-muted text-muted-foreground' },
-  rejected: { label: 'Flagged', className: 'bg-destructive/10 text-destructive border border-destructive/20' },
+  submitted: { 
+    label: 'Submitted', 
+    className: 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+  },
+  collected: { 
+    label: 'Collected', 
+    className: 'bg-blue-100 text-blue-800 border border-blue-200' 
+  },
+  in_transit: { 
+    label: 'In Transit', 
+    className: 'bg-purple-100 text-purple-800 border border-purple-200' 
+  },
+  delivered: { 
+    label: 'Delivered', 
+    className: 'bg-green-100 text-green-800 border border-green-200' 
+  },
+  processed: { 
+    label: 'Processed', 
+    className: 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+  },
 };
 
-export default function StatusBadge({ status }: { status: WasteStatus }) {
+export default function StatusBadge({ status, showDot = true }: StatusBadgeProps) {
   const config = statusConfig[status];
+  
+  if (!config) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        {showDot && <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />}
+        {status}
+      </span>
+    );
+  }
+  
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />
+      {showDot && <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />}
       {config.label}
     </span>
   );
