@@ -10,6 +10,11 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
+interface FirebaseError {
+  code?: string;
+  message?: string;
+}
+
 const roles = [
   { id: 'citizen', name: 'Citizen', icon: Leaf, color: 'bg-emerald-500', description: 'Track your waste contributions and earn rewards' },
   { id: 'collector', name: 'Collector', icon: Truck, color: 'bg-blue-500', description: 'Manage waste collection routes and verify pickups' },
@@ -74,7 +79,6 @@ export default function SignUp() {
       console.log('Profile updated with name:', name);
 
       // Store user data in localStorage for session management
-      // For now, we're storing the role only in localStorage, not in Firestore
       localStorage.setItem('tb_user', JSON.stringify({
         uid: user.uid,
         name: name,
@@ -89,22 +93,23 @@ export default function SignUp() {
         navigate(`/${selectedRole}`);
       }, 1500);
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Signup error details:', err);
+      const firebaseError = err as FirebaseError;
       
       // More detailed error messages
-      if (err.code === 'auth/email-already-in-use') {
+      if (firebaseError.code === 'auth/email-already-in-use') {
         setError('An account with this email already exists. Please login instead.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password is too weak. Please use a stronger password.');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (firebaseError.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use a stronger password (at least 6 characters).');
+      } else if (firebaseError.code === 'auth/invalid-email') {
         setError('Invalid email format. Please enter a valid email address.');
-      } else if (err.code === 'auth/network-request-failed') {
+      } else if (firebaseError.code === 'auth/network-request-failed') {
         setError('Network error. Please check your internet connection and try again.');
-      } else if (err.code === 'auth/too-many-requests') {
+      } else if (firebaseError.code === 'auth/too-many-requests') {
         setError('Too many failed attempts. Please try again later.');
       } else {
-        setError(`Failed to create account: ${err.message || 'Please try again.'}`);
+        setError(`Failed to create account: ${firebaseError.message || 'Please try again.'}`);
       }
     } finally {
       setLoading(false);

@@ -10,6 +10,11 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
+interface FirebaseError {
+  code?: string;
+  message?: string;
+}
+
 const roles = [
   { id: 'citizen', name: 'Citizen', icon: Leaf, color: 'bg-emerald-500' },
   { id: 'collector', name: 'Collector', icon: Truck, color: 'bg-blue-500' },
@@ -68,16 +73,20 @@ export default function Login() {
 
       // Redirect to role-specific dashboard
       navigate(`/${selectedRole}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login error:', err);
-      if (err.code === 'auth/user-not-found') {
+      const firebaseError = err as FirebaseError;
+      
+      if (firebaseError.code === 'auth/user-not-found') {
         setError('No account found with this email. Please sign up first.');
-      } else if (err.code === 'auth/wrong-password') {
+      } else if (firebaseError.code === 'auth/wrong-password') {
         setError('Incorrect password. Please try again.');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (firebaseError.code === 'auth/invalid-email') {
         setError('Invalid email format.');
-      } else if (err.code === 'auth/too-many-requests') {
+      } else if (firebaseError.code === 'auth/too-many-requests') {
         setError('Too many failed attempts. Please try again later.');
+      } else if (firebaseError.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
       } else {
         setError('Failed to login. Please check your credentials.');
       }
