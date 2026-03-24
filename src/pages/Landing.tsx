@@ -264,7 +264,7 @@ export default function Landing() {
                     <AlertCircle className="w-4 h-4" /> Report Anomaly
                   </Button>
                   <Button onClick={() => navigate('/login')} className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-lg font-[800] uppercase tracking-wider text-[10px] h-10 px-5 gap-2 shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                    <UserIcon className="w-4 h-4" /> Citizen Login
+                    <UserIcon className="w-4 h-4" /> Login / Signup
                   </Button>
                 </>
               ) : (
