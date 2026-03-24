@@ -1,68 +1,157 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Open+Sans:wght@400;600;700&display=swap');
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 27 100% 50%;
+    /* Saffron */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 122 88% 28%;
+    /* Indian Green */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 20% 40%;
+    /* Darkened for better readability in light mode */
+    --accent: 240 100% 25%;
+    /* Navy Blue */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 27 100% 50%;
+    --radius: 0.5rem;
   }
-  a:hover {
-    color: #747bff;
+
+  .dark {
+    /* Maintain light theme as default for government professional look, 
+       but provide a clean dark mode if needed. */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 27 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 122 88% 28%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased transition-all duration-300;
+    background-image: radial-gradient(at 0% 0%, hsla(27, 100%, 50%, 0.05) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(122, 88%, 28%, 0.05) 0, transparent 50%);
+  }
+
+  /* Accessibility Root Modifiers */
+  :root.access-invert {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  :root.access-invert img,
+  :root.access-invert svg:not(.icon) {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  :root.access-grayscale {
+    filter: grayscale(1);
+  }
+
+  :root.access-big-cursor,
+  :root.access-big-cursor * {
+    cursor: default !important;
+    /* Standard big cursor fallback */
+  }
+
+  :root.access-dyslexic {
+    font-family: 'OpenSans', sans-serif !important;
+    word-spacing: 0.15em !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  :root.access-highlight-links a,
+  :root.access-highlight-links button:not(.no-highlight) {
+    outline: 2px solid var(--primary) !important;
+    outline-offset: 2px !important;
+    text-decoration: underline !important;
+  }
+
+  :root.access-hide-images img,
+  :root.access-hide-images .hide-on-access {
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+}
+
+@layer components {
+  .ux4g-header {
+    @apply sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm;
+  }
+
+  .ux4g-topbar {
+    @apply h-10 bg-accent text-accent-foreground flex items-center px-6 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider justify-between border-b border-white/10;
+  }
+
+  .gov-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-orange-600 to-secondary bg-clip-text text-transparent;
+  }
+
+  .section-title {
+    @apply text-3xl font-bold tracking-tight text-accent border-l-4 border-primary pl-4 mb-8;
+  }
+
+  .page-container {
+    @apply min-h-screen py-10 px-6 max-w-7xl mx-auto;
+  }
+
+  .nav-link-active {
+    @apply border-b-2 border-primary text-primary font-semibold;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
