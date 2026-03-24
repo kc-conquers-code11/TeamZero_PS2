@@ -205,7 +205,54 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Portal Grid */}
+        {/* Numeric Insights - Stats Section */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-32">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-white border border-muted p-10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all text-center group"
+            >
+              <div className="text-5xl font-black text-[#1a2634] tracking-tighter mb-2 flex items-center justify-center">
+                <AnimatedCounter value={stat.value} />
+                <span className="text-secondary ml-1">{stat.suffix}</span>
+              </div>
+              <div className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground group-hover:text-secondary transition-colors">
+                {stat.label}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Platform Features - The Four Pillars */}
+        <div className="mb-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-[#1a2634] tracking-tighter mb-4">Unbreakable Chain of Accountability</h2>
+            <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Four core pillars of the TrackBin ecosystem</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.map((feature, i) => (
+              <div key={feature.title} className="flex items-start gap-8 p-10 bg-[#f8f9fa] border border-border/50 rounded-[2.5rem] hover:bg-white hover:shadow-2xl transition-all group">
+                <div className="w-16 h-16 rounded-2xl bg-[#1a2634] text-white flex items-center justify-center shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-[#1a2634] mb-3 tracking-tighter">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm font-medium leading-relaxed">{feature.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* System Access Portal Grid */}
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-black text-[#1a2634] tracking-tighter mb-4">Unified Handoff Protocol</h2>
+          <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Access specific nodes in the waste lifecycle</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-24">
           {roles.map((role) => (
             <PortalCard
