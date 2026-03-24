@@ -9,6 +9,13 @@ export default function BlockchainExplorer() {
   const entries = useMemo(() => generateWasteEntries(50), []);
   const blocks = useMemo(() => generateBlockchain(entries), [entries]);
   const [selected, setSelected] = useState<Block | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredBlocks = blocks.filter(b =>
+    b.wasteId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.blockId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.data.citizen.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <DashboardLayout title="Blockchain Explorer">
@@ -39,8 +46,8 @@ export default function BlockchainExplorer() {
               <button
                 onClick={() => setSelected(block)}
                 className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all min-w-[120px] ${selected?.blockId === block.blockId
-                    ? 'border-primary bg-primary/5 shadow-inner'
-                    : 'border-border/30 hover:border-primary/30'
+                  ? 'border-primary bg-primary/5 shadow-inner'
+                  : 'border-border/30 hover:border-primary/30'
                   }`}
               >
                 <Hash className="w-5 h-5 text-primary mb-2" />
@@ -58,10 +65,23 @@ export default function BlockchainExplorer() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Block List */}
         <div className="lg:col-span-2">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="gov-card p-8 bg-white">
-            <h3 className="text-lg font-bold text-accent mb-6">Master Ledger</h3>
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-              {blocks.map((block) => (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="gov-card p-8 bg-white h-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b">
+              <h3 className="text-lg font-bold text-accent">Master Ledger Audit</h3>
+              <div className="relative w-full md:w-64 group">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search Waste ID / Citizen..."
+                  className="w-full h-10 pl-10 pr-4 bg-muted/30 border border-border/30 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+              {filteredBlocks.map((block) => (
                 <button
                   key={block.blockId}
                   onClick={() => setSelected(block)}

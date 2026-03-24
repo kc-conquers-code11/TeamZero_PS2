@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Factory, CheckCircle2, XCircle, Recycle, Trash2, Upload, BarChart3 } from 'lucide-react';
+import { Factory, CheckCircle2, XCircle, Recycle, Trash2, Upload, BarChart3, ScanLine, ShieldCheck } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import DashboardLayout from '@/components/DashboardLayout';
 import KPICard from '@/components/KPICard';
 import StatusBadge from '@/components/StatusBadge';
@@ -12,6 +13,8 @@ import { generateWasteEntries, type WasteStatus, wasteTypeColors } from '@/lib/m
 export default function FacilityDashboard() {
   const entries = useMemo(() => generateWasteEntries(40).filter(e => ['delivered', 'recycled', 'landfill', 'rejected'].includes(e.status)), []);
   const [processedStatuses, setProcessedStatuses] = useState<Record<string, WasteStatus>>({});
+  const [qrInput, setQrInput] = useState('');
+  const [verificationNode, setVerificationNode] = useState<string | null>(null);
 
   const getStatus = (id: string, original: WasteStatus) => processedStatuses[id] || original;
   const updateStatus = (id: string, status: WasteStatus) => setProcessedStatuses(prev => ({ ...prev, [id]: status }));
@@ -44,22 +47,57 @@ export default function FacilityDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Charts */}
+        {/* Verification Terminal */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="gov-card p-8 bg-white">
+          <h3 className="text-lg font-bold text-accent mb-6 flex items-center gap-2 border-b pb-4">
+            <ScanLine className="w-5 h-5 text-primary" /> Verification Terminal
+          </h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4 italic">Confirm Collector Batch QR</p>
+          <div className="relative mb-4 group">
+            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              value={qrInput}
+              onChange={(e) => setQrInput(e.target.value)}
+              placeholder="Batch QR / Waste ID"
+              className="pl-10 h-10 text-xs font-mono"
+            />
+          </div>
+          <Button
+            className="w-full h-10 font-black uppercase tracking-widest text-[10px]"
+            onClick={() => {
+              const entry = entries.find(e => e.id === qrInput.toUpperCase());
+              if (entry) setVerificationNode(entry.id);
+            }}
+          >
+            Verify Node Access
+          </Button>
+
+          {verificationNode && (
+            <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <div className="text-left">
+                <p className="text-[10px] font-black uppercase text-emerald-600">Batch Verified</p>
+                <p className="text-[10px] text-emerald-600/70 font-mono tracking-tighter">NODE-REG: {verificationNode}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="h-[1px] bg-border/20 my-8" />
+
           <h3 className="text-lg font-bold text-accent mb-6">Processing Breakdown</h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
+              <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value">
                 {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
               </Pie>
               <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 justify-center mt-2">
+          <div className="flex flex-wrap gap-2 justify-center mt-2">
             {pieData.map((d) => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                {d.name}: {d.value}
+              <div key={d.name} className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter">
+                <div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
+                {d.name.slice(0, 3)}: {d.value}
               </div>
             ))}
           </div>

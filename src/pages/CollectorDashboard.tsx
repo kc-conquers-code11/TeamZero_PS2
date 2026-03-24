@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Truck, ScanLine, MapPin, CheckCircle2, Clock, Package } from 'lucide-react';
+import { Truck, ScanLine, MapPin, CheckCircle2, Clock, Package, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -18,10 +18,18 @@ export default function CollectorDashboard() {
   const [updatedStatuses, setUpdatedStatuses] = useState<Record<string, WasteStatus>>({});
 
   const handleScan = () => {
-    // Simulate scanning — just pick a random entry
-    const entry = entries[Math.floor(Math.random() * entries.length)];
-    setScannedId(entry.id);
-    setQrInput(entry.qrCode);
+    if (!qrInput) return;
+
+    // Check if input is a TB QR (format: TB|ID|...) or just an ID
+    const searchId = qrInput.includes('|') ? qrInput.split('|')[1] : qrInput.toUpperCase();
+    const entry = entries.find(e => e.id === searchId || e.id.includes(searchId));
+
+    if (entry) {
+      setScannedId(entry.id);
+      updateStatus(entry.id, 'collected');
+    } else {
+      setScannedId('NOT_FOUND');
+    }
   };
 
   const updateStatus = (id: string, status: WasteStatus) => {
@@ -62,11 +70,31 @@ export default function CollectorDashboard() {
             Launch Camera Scanner
           </Button>
           {scannedId && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 p-4 rounded-lg bg-secondary/10 border border-secondary/20 text-sm font-bold text-secondary">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                VERIFIED ID: {scannedId}
-              </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`mt-6 p-4 rounded-lg border-2 flex items-center gap-3 ${scannedId === 'NOT_FOUND'
+                  ? 'bg-destructive/10 border-destructive/20 text-destructive'
+                  : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
+                }`}
+            >
+              {scannedId === 'NOT_FOUND' ? (
+                <>
+                  <AlertCircle className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-xs font-black uppercase tracking-wider">Invalid Token</p>
+                    <p className="text-[10px] opacity-70">Entry not found in blockchain registry</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-xs font-black uppercase tracking-wider">Verified Identity</p>
+                    <p className="text-[10px] opacity-70">Node verified: {scannedId}</p>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 

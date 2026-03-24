@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Leaf, Upload, Clock, Trophy, Star, Flame, Award } from 'lucide-react';
+import { Leaf, Upload, Clock, Trophy, Star, Flame, Award, Download, CheckCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/DashboardLayout';
 import KPICard from '@/components/KPICard';
@@ -33,8 +33,31 @@ export default function CitizenDashboard() {
 
   const handleSubmit = () => {
     const id = `W-${Date.now().toString(36).toUpperCase()}`;
-    const qr = `TB-${id}-${selectedType}`;
+    const timestamp = new Date().toISOString();
+    // Unique QR contains: ID | Type | Weight | Timestamp (truncated)
+    const qr = `TB|${id}|${selectedType}|1.5|${timestamp.slice(0, 10)}`;
     setQrData(qr);
+  };
+
+  const downloadQR = () => {
+    const svg = document.getElementById('waste-qr');
+    if (svg) {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        const pngFile = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `TrackBin-QR-${qrData?.split('|')[1]}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+    }
   };
 
   return (
@@ -79,12 +102,28 @@ export default function CitizenDashboard() {
 
           {/* QR Result */}
           {qrData && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="gov-card p-8 bg-white text-center border-2 border-primary/20">
-              <h3 className="text-lg font-bold text-accent mb-6">Official Waste QR</h3>
-              <div className="bg-muted p-6 rounded-xl inline-block mb-4 shadow-inner">
-                <QRCodeSVG value={qrData} size={180} bgColor="transparent" fgColor="hsl(27, 100%, 50%)" />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="gov-card p-8 bg-white text-center border-2 border-primary/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-5">
+                <ShieldCheck className="w-16 h-16 text-primary" />
               </div>
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{qrData}</p>
+              <h3 className="text-lg font-bold text-accent mb-2 flex items-center justify-center gap-2">
+                <CheckCircle className="w-5 h-5 text-primary" /> Official Waste QR
+              </h3>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-6">Unique Submission Token</p>
+
+              <div className="bg-white p-4 border-2 border-dashed border-primary/20 rounded-2xl inline-block mb-6 shadow-sm">
+                <QRCodeSVG id="waste-qr" value={qrData} size={180} level="H" includeMargin={true} fgColor="#1a2634" />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="bg-muted/30 p-3 rounded-lg border border-border/10">
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1 italic">Blockchain ID</p>
+                  <p className="text-xs font-mono font-bold text-accent">{qrData.split('|')[1]}</p>
+                </div>
+                <Button variant="outline" className="w-full gap-2 font-bold uppercase tracking-widest text-[10px] border-primary text-primary hover:bg-primary hover:text-white" onClick={downloadQR}>
+                  <Download className="w-4 h-4" /> Download QR Access Pass
+                </Button>
+              </div>
             </motion.div>
           )}
 
