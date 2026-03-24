@@ -1,3 +1,6 @@
+// src/lib/mockData.ts
+import { WasteType, WasteStatus, WasteSubmission, User } from './types';
+
 // Simple hash function for blockchain mock
 export function simpleHash(input: string): string {
   let hash = 0;
@@ -10,15 +13,15 @@ export function simpleHash(input: string): string {
     Math.random().toString(16).slice(2, 14);
 }
 
-export type WasteType = 'wet' | 'dry' | 'plastic' | 'hazardous' | 'ewaste';
-export type WasteStatus = 'submitted' | 'collected' | 'in_transit' | 'delivered' | 'recycled' | 'landfill' | 'rejected';
+// Export types from types file
+export type { WasteType, WasteStatus, WasteSubmission, User };
 
 export interface WasteEntry {
   id: string;
   citizenId: string;
   citizenName: string;
   type: WasteType;
-  weight: number; // kg
+  weight: number;
   status: WasteStatus;
   timestamp: string;
   area: string;
@@ -69,14 +72,13 @@ function randomDate(daysAgo: number): string {
 }
 
 function generateTimeline(status: WasteStatus, baseDate: string): { status: WasteStatus; timestamp: string; by: string }[] {
-  const statuses: WasteStatus[] = ['submitted', 'collected', 'in_transit', 'delivered'];
-  const endStatuses: WasteStatus[] = ['recycled', 'landfill', 'rejected'];
+  const statuses: WasteStatus[] = ['submitted', 'collected', 'in_transit', 'delivered', 'processed'];
   const timeline: { status: WasteStatus; timestamp: string; by: string }[] = [];
   
   const base = new Date(baseDate);
-  const statusIndex = [...statuses, ...endStatuses].indexOf(status);
+  const statusIndex = statuses.indexOf(status);
   
-  for (let i = 0; i <= Math.min(statusIndex, statuses.length - 1); i++) {
+  for (let i = 0; i <= statusIndex; i++) {
     const d = new Date(base);
     d.setHours(d.getHours() + i * 2);
     timeline.push({
@@ -88,18 +90,12 @@ function generateTimeline(status: WasteStatus, baseDate: string): { status: Wast
     });
   }
   
-  if (endStatuses.includes(status)) {
-    const d = new Date(base);
-    d.setHours(d.getHours() + 10);
-    timeline.push({ status, timestamp: d.toISOString(), by: 'Processing Facility Alpha' });
-  }
-  
   return timeline;
 }
 
 export function generateWasteEntries(count: number = 50): WasteEntry[] {
   const types: WasteType[] = ['wet', 'dry', 'plastic', 'hazardous', 'ewaste'];
-  const allStatuses: WasteStatus[] = ['submitted', 'collected', 'in_transit', 'delivered', 'recycled', 'landfill', 'rejected'];
+  const allStatuses: WasteStatus[] = ['submitted', 'collected', 'in_transit', 'delivered', 'processed'];
   
   return Array.from({ length: count }, (_, i) => {
     const status = allStatuses[Math.floor(Math.random() * allStatuses.length)];
@@ -148,8 +144,8 @@ export function generateBlockchain(entries: WasteEntry[]): Block[] {
 
 export function generateAnomalies(): Anomaly[] {
   return [
-    { id: 'A-001', type: 'fake_completion', severity: 'high', description: 'Waste W-1023 marked as recycled but no facility verification found', wasteId: 'W-1023', timestamp: randomDate(3), area: 'Industrial Zone' },
-    { id: 'A-002', type: 'missing_step', severity: 'high', description: 'Waste W-1015 jumped from "submitted" to "recycled" — collection step missing', wasteId: 'W-1015', timestamp: randomDate(5), area: 'Downtown' },
+    { id: 'A-001', type: 'fake_completion', severity: 'high', description: 'Waste W-1023 marked as processed but no facility verification found', wasteId: 'W-1023', timestamp: randomDate(3), area: 'Industrial Zone' },
+    { id: 'A-002', type: 'missing_step', severity: 'high', description: 'Waste W-1015 jumped from "submitted" to "processed" — collection step missing', wasteId: 'W-1015', timestamp: randomDate(5), area: 'Downtown' },
     { id: 'A-003', type: 'delayed', severity: 'medium', description: 'Waste W-1031 stuck in "in_transit" for over 48 hours', wasteId: 'W-1031', timestamp: randomDate(2), area: 'Old Town' },
     { id: 'A-004', type: 'suspicious', severity: 'medium', description: 'Collector COL-3 has unusually high completion rate in Sector 17', wasteId: 'W-1042', timestamp: randomDate(1), area: 'Sector 17' },
     { id: 'A-005', type: 'missing_step', severity: 'low', description: 'Waste W-1008 missing transit verification step', wasteId: 'W-1008', timestamp: randomDate(7), area: 'Green Valley' },
@@ -170,9 +166,7 @@ export const statusColors: Record<WasteStatus, string> = {
   collected: '#3b82f6',
   in_transit: '#f59e0b',
   delivered: '#8b5cf6',
-  recycled: '#10b981',
-  landfill: '#6b7280',
-  rejected: '#f43f5e',
+  processed: '#10b981',
 };
 
 export const weeklyTrends = [

@@ -1,114 +1,214 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
-import { Recycle, User, Truck, Factory, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import type { UserRole } from '@/lib/store';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Leaf, Truck, Factory, Building2, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
-const roles: { role: UserRole; label: string; icon: typeof User; desc: string }[] = [
-  { role: 'citizen', label: 'Citizen', icon: User, desc: 'Track & submit waste' },
-  { role: 'collector', label: 'Collector', icon: Truck, desc: 'Collect & transport' },
-  { role: 'facility', label: 'Facility', icon: Factory, desc: 'Process & verify' },
-  { role: 'authority', label: 'Authority', icon: Building2, desc: 'Monitor & govern' },
+interface FirebaseError {
+  code?: string;
+  message?: string;
+}
+
+const roles = [
+  { id: 'citizen', name: 'Citizen', icon: Leaf, color: 'bg-emerald-500' },
+  { id: 'collector', name: 'Collector', icon: Truck, color: 'bg-blue-500' },
+  { id: 'facility', name: 'Facility Manager', icon: Factory, color: 'bg-purple-500' },
+  { id: 'authority', name: 'Authority', icon: Building2, color: 'bg-orange-500' },
 ];
 
-const dashboardRoutes: Record<UserRole, string> = {
-  citizen: '/citizen',
-  collector: '/collector',
-  facility: '/facility',
-  authority: '/authority',
-};
-
 export default function Login() {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('citizen');
-  const [name, setName] = useState('');
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const [selectedRole, setSelectedRole] = useState('citizen');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Store in localStorage for simplicity (will use Supabase later)
-    localStorage.setItem('tb_user', JSON.stringify({ name: name || roles.find(r => r.role === selectedRole)!.label + ' User', role: selectedRole }));
-    navigate(dashboardRoutes[selectedRole]);
+    setError('');
+    setLoading(true);
+
+    try {
+      console.log('Attempting login with:', email);
+      
+      // Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log('Login successful:', user.uid);
+
+      // Get the stored role from localStorage (set during signup)
+      const storedUser = localStorage.getItem('tb_user');
+      let userRole = selectedRole;
+      
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.email === email) {
+          userRole = parsedUser.role;
+        }
+      }
+
+      // Verify role matches selected role
+      if (userRole !== selectedRole) {
+        setError(`This account is registered as a ${userRole}. Please select the correct role.`);
+        setLoading(false);
+        return;
+      }
+
+      // Update localStorage with latest user data
+      localStorage.setItem('tb_user', JSON.stringify({
+        uid: user.uid,
+        name: user.displayName || email.split('@')[0],
+        role: userRole,
+        email: user.email
+      }));
+
+      // Redirect to role-specific dashboard
+      navigate(`/${selectedRole}`);
+    } catch (err) {
+      console.error('Login error:', err);
+      const firebaseError = err as FirebaseError;
+      
+      if (firebaseError.code === 'auth/user-not-found') {
+        setError('No account found with this email. Please sign up first.');
+      } else if (firebaseError.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (firebaseError.code === 'auth/invalid-email') {
+        setError('Invalid email format.');
+      } else if (firebaseError.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else if (firebaseError.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError('Failed to login. Please check your credentials.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleSelect = (role: string) => {
+    setSelectedRole(role);
+    setError('');
   };
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Recycle className="w-6 h-6 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <Leaf className="w-8 h-8 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold">TrackBin</span>
-          </Link>
-          <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-muted-foreground text-sm">Select your role to continue</p>
-        </div>
-
-        <div className="gov-card p-10 bg-white">
-          {/* Role Selection */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            {roles.map((r) => (
-              <button
-                key={r.role}
-                onClick={() => setSelectedRole(r.role)}
-                className={`p-6 rounded-xl border-2 text-left transition-all duration-300 ${selectedRole === r.role
-                    ? 'border-primary bg-primary/5 shadow-inner'
-                    : 'border-border/40 hover:border-primary/20 bg-background'
-                  }`}
-              >
-                <r.icon className={`w-6 h-6 mb-3 ${selectedRole === r.role ? 'text-primary' : 'text-muted-foreground'}`} />
-                <p className="font-bold text-sm text-accent">{r.label}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1 leading-tight">{r.desc}</p>
-              </button>
-            ))}
           </div>
+          <CardTitle className="text-2xl font-bold">TrackBin Portal</CardTitle>
+          <CardDescription>
+            Select your role and login to access your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={selectedRole} onValueChange={handleRoleSelect} className="w-full">
+            <TabsList className="grid grid-cols-4 mb-6">
+              {roles.map((role) => {
+                const Icon = role.icon;
+                return (
+                  <TabsTrigger key={role.id} value={role.id} className="flex flex-col gap-1 py-2">
+                    <Icon className="w-4 h-4" />
+                    <span className="text-[10px] hidden sm:inline">{role.name}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Identity Name</label>
-              <Input
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-12 bg-muted/30 border-border/40 focus:bg-white transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
-              <Input
-                placeholder="Email (demo - any value)"
-                type="email"
-                defaultValue="demo@trackbin.io"
-                className="h-12 bg-muted/30 border-border/40 focus:bg-white transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Secure Passkey</label>
-              <Input
-                placeholder="Password (demo - any value)"
-                type="password"
-                defaultValue="demo1234"
-                className="h-12 bg-muted/30 border-border/40 focus:bg-white transition-all"
-              />
-            </div>
-            <Button type="submit" className="w-full h-14 font-black uppercase tracking-widest text-sm mt-4">
-              Authorized Sign In: {roles.find(r => r.role === selectedRole)?.label}
-            </Button>
-          </form>
-        </div>
+            {roles.map((role) => (
+              <TabsContent key={role.id} value={role.id}>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className="pl-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        className="pl-10 pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          Demo mode — all data is simulated
-        </p>
-      </motion.div>
+                  {error && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#1a2634] hover:bg-[#2d3a4a]"
+                    disabled={loading}
+                  >
+                    {loading ? 'Logging in...' : `Login as ${role.name}`}
+                  </Button>
+                </form>
+              </TabsContent>
+            ))}
+          </Tabs>
+
+          <div className="mt-6 pt-6 border-t text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary hover:underline font-semibold">
+                Sign up here
+              </Link>
+            </p>
+            <div className="mt-4">
+              <Link 
+                to="/" 
+                className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
