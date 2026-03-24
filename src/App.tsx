@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
+import SignUp from "./pages/Signup";
 import CitizenDashboard from "./pages/CitizenDashboard";
 import CollectorDashboard from "./pages/CollectorDashboard";
 import FacilityDashboard from "./pages/FacilityDashboard";
